@@ -1,36 +1,36 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     'use strict';
     //tabs
     const objTabs = {
         content: document.querySelectorAll('.tabcontent'),
         contentName: document.querySelectorAll('.tabheader__item'),
 
-        startTabs: function() {
+        startTabs: function () {
             this.content.forEach((item) => {
                 item.style.display = 'none';
             });
-            
-            this.content[0].style.display ='';
+
+            this.content[0].style.display = '';
 
             this.contentName.forEach((item, i) => {
                 item.addEventListener('click', () => {
                     item.classList.add('tabheader__item_active');
                     this.content[i].style.display = '';
 
-                    for (let j = 0; j < 4; j++) {                        
+                    for (let j = 0; j < 4; j++) {
                         if (i == j) {
                             continue;
                         } else {
-                           this.contentName[j].classList.remove('tabheader__item_active');
-                           this.content[j].style.display = 'none';
-                            
+                            this.contentName[j].classList.remove('tabheader__item_active');
+                            this.content[j].style.display = 'none';
+
                         }
                     }
                 });
             });
         }
     };
-    
+
     objTabs.startTabs();
 
     // Timer
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function getZero(num) {
         if (num >= 0 && num < 10) {
-           return `0${num}`; 
+            return `0${num}`;
         } else {
             return num;
         }
@@ -72,12 +72,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         function updateClock() {
             const t = getTimeRemaining(endtime);
-    
+
             days.innerHTML = getZero(t.days);
             hours.innerHTML = getZero(t.hours);
             minutes.innerHTML = getZero(t.minutes);
             seconds.innerHTML = getZero(t.seconds);
-    
+
             if (t.total <= 0) {
                 clearInterval(timeInterval);
             }
@@ -85,5 +85,39 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     setClock('.timer', deadline);
-  
+
+
+    // Modal
+    const modal = document.querySelector('.modal');
+    const btnWhite = document.querySelector('.btn');
+    const btnClose = document.querySelector('.modal__close');
+
+    function startModal() {
+        btnWhite.addEventListener('click',() => {
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        });
+
+        function closeModal() {
+            modal.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        btnClose.addEventListener('click', closeModal);
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Escape' && modal.classList.contains('show')) {
+                closeModal();
+            }
+        });
+    }
+
+    startModal();
+
 });

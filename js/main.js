@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function () {
     objTabs.startTabs();
 
     // Timer
-    const deadline = '2020-09-23';
+    const deadline = '2020-09-29';
 
     function getTimeRemaining(endtime) {
         const t = Date.parse(endtime) - Date.parse(new Date());
@@ -92,6 +92,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnWhite = document.querySelector('.btn');
     const btnClose = document.querySelector('.modal__close');
 
+    function openModal() {
+        modal.classList.add('show');
+        //modal.classList.remove('hide');
+        document.body.style.overflow = 'hidden';
+        clearInterval(modalTimerId);
+    }
+
     function startModal() {
         btnWhite.addEventListener('click',() => {
             modal.classList.add('show');
@@ -116,7 +123,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 closeModal();
             }
         });
+
+
+        function showModalByScroll() {
+            if (window.pageYOffset + document.documentElement.clientHeight >= document.documentElement.scrollHeight) {
+                console.log('hello');
+                openModal();
+                window.removeEventListener('click', showModalByScroll);
+            }
+        }
+    
+        window.addEventListener('click', showModalByScroll);
     }
+
+    const modalTimerId = setTimeout(openModal, 15000);
 
     startModal();
 

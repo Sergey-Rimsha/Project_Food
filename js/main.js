@@ -34,11 +34,11 @@ document.addEventListener('DOMContentLoaded', function () {
     objTabs.startTabs();
 
     // Timer
-    const deadline = '2020-09-29';
+    const deadline = '2020-10-22';
 
     function getTimeRemaining(endtime) {
         const t = Date.parse(endtime) - Date.parse(new Date());
-        const days = Math.floor(t / (10000 * 60 * 60 * 24));
+        const days = Math.floor(t / (1000 * 60 * 60 * 24));
         const hours = Math.floor((t / (1000 * 60 * 60) % 24));
         const minutes = Math.floor((t / 1000 / 60) % 60);
         const seconds = Math.floor((t / 1000) % 60);

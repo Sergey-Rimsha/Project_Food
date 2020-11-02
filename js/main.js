@@ -124,7 +124,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-
         function showModalByScroll() {
             if (window.pageYOffset + document.documentElement.clientHeight >= document.documentElement.scrollHeight) {
                 console.log('hello');

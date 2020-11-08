@@ -88,56 +88,53 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     // Modal
-    const modal = document.querySelector('.modal');
-    const btnWhite = document.querySelector('.btn');
-    const btnClose = document.querySelector('.modal__close');
+
+    const modalTrigger = document.querySelectorAll('[data-modal]'),
+        modal = document.querySelector('.modal');
+
+    modalTrigger.forEach(btn => {
+        btn.addEventListener('click', openModal);
+    });
+
+    function closeModal() {
+        modal.classList.add('hide');
+        modal.classList.remove('show');
+        document.body.style.overflow = '';
+    }
 
     function openModal() {
         modal.classList.add('show');
-        //modal.classList.remove('hide');
+        modal.classList.remove('hide');
         document.body.style.overflow = 'hidden';
-        //  clearInterval(modalTimerId);
+        clearInterval(modalTimerId);
     }
 
-    function startModal() {
-        btnWhite.addEventListener('click', () => {
-            modal.classList.add('show');
-            document.body.style.overflow = 'hidden';
-        });
-
-        function closeModal() {
-            modal.classList.remove('show');
-            document.body.style.overflow = '';
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal || e.target.getAttribute('data-close') == '') {
+            closeModal();
         }
+    });
 
-        btnClose.addEventListener('click', closeModal);
-
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                closeModal();
-            }
-        });
-
-        document.addEventListener('keydown', (e) => {
-            if (e.code === 'Escape' && modal.classList.contains('show')) {
-                closeModal();
-            }
-        });
-
-        function showModalByScroll() {
-            if (window.pageYOffset + document.documentElement.clientHeight >= document.documentElement.scrollHeight) {
-                console.log('hello');
-                openModal();
-                window.removeEventListener('click', showModalByScroll);
-            }
+    document.addEventListener('keydown', (e) => {
+        if (e.code === "Escape" && modal.classList.contains('show')) { 
+            closeModal();
         }
+    });
 
-        window.addEventListener('click', showModalByScroll);
+    const modalTimerId = setTimeout(openModal, 50000);
+
+    function showModalByScroll() {
+        if (window.pageYOffset + document.documentElement.clientHeight >= document.documentElement.scrollHeight) {
+            openModal();
+            window.removeEventListener('scroll', showModalByScroll);
+        }
     }
+    window.addEventListener('scroll', showModalByScroll);
 
-    //const modalTimerId = setTimeout(openModal, 15000);
 
-    startModal();
+   
+
+    // Menu card -- class
 
     class MenuCard {
         constructor(src, alt, title, descr, price, parentSelector, ...classes) {
@@ -213,7 +210,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const forms = document.querySelectorAll('form');
 
     const message = {
-        loading: 'Загурзка',
+        loading: 'img/form/spinner.svg',
         success: 'Спасибо! Скоро мы с вами свяжемся',
         faillure: 'Что-то пошло не так...'
     };
@@ -226,16 +223,14 @@ document.addEventListener('DOMContentLoaded', function () {
         form.addEventListener('submit', (e) => {
             e.preventDefault();
 
-            const statusMassage = document.createElement('div');
-            statusMassage.classList.add('status');
-            statusMassage.textContent = message.loading;
-            form.append(statusMassage);
+            const statusMassage = document.createElement('img');
+            statusMassage.src = message.loading;
+            statusMassage.style.cssText = `
+                display: block;
+                margin: 0 auto;
+            `;
+            form.insertAdjacentElement('afterend', statusMassage);
 
-            const request = new XMLHttpRequest();
-            request.open('POST', 'server.php');
-
-           // request.setRequestHeader('Content-type', 'multipart/form-data');
-            request.setRequestHeader('Content-type', 'application/json');
             const formData = new FormData(form);
 
             const object = {};
@@ -243,23 +238,55 @@ document.addEventListener('DOMContentLoaded', function () {
                 object[key] = value;
             });
 
-            const json = JSON.stringify(object);
+            // fetch new
 
-            request.send(json);
-
-            request.addEventListener('load', () => {
-                if (request.status === 200) {
-                    console.log(request.response);
-                    statusMassage.textContent = message.success;
-                    form.reset();
-                    setTimeout(() => {
-                        statusMassage.remove();
-                    }, 2000);
-                } else {
-                    statusMassage.textContent = message.faillure;
-                }
+            fetch('server.php', {
+                method: "POST",
+                headers: {
+                    'Content-type': 'application/json'
+                },
+                body: JSON.stringify(object)
+            })
+            .then(date => date.text())
+            .then(data => {
+                console.log(data);
+                showThanksModal(message.success);
+                statusMassage.remove();
+            })
+            .catch(() => {
+                showThanksModal(message.faillure);
+            })
+            .finally(() => {
+                form.reset();
             });
+
         });
+    }
+
+    function showThanksModal(message) {
+        const prevModalDialog = document.querySelector('.modal__dialog');
+
+        prevModalDialog.classList.add('hide');
+        openModal();
+
+        const thanksModal = document.createElement('div');
+        thanksModal.classList.add('modal__dialog');
+        thanksModal.innerHTML = `
+            <div class="modal__content">
+                <div class="modal__close" data-close>×</div>
+                <div class="modal__title">${message}</div>
+            </div>
+        `;
+
+        const appendModal = document.querySelector('.modal');
+        appendModal.append(thanksModal);
+        setTimeout(() => {
+            thanksModal.remove();
+            prevModalDialog.classList.add('show');
+            prevModalDialog.classList.remove('hide');
+            closeModal();
+        }, 4000);
+
     }
 
 });

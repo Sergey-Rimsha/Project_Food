@@ -1,37 +1,42 @@
 document.addEventListener('DOMContentLoaded', function () {
     'use strict';
-    //tabs
-    const objTabs = {
-        content: document.querySelectorAll('.tabcontent'),
-        contentName: document.querySelectorAll('.tabheader__item'),
+    // Tabs
+    const tabs = document.querySelectorAll('.tabheader__item'),
+        tabsContent = document.querySelectorAll('.tabcontent'),
+        tabsParent = document.querySelector('.tabheader__items');
 
-        startTabs: function () {
-            this.content.forEach((item) => {
-                item.style.display = 'none';
-            });
+    function hideTabContent() {
+        tabsContent.forEach(item => {
+            item.classList.add('hide');
+            item.classList.remove('show', 'fade');
+        });
 
-            this.content[0].style.display = '';
+        tabs.forEach(item => {
+            item.classList.remove('tabheader__item_active');
+        });
+    }
 
-            this.contentName.forEach((item, i) => {
-                item.addEventListener('click', () => {
-                    item.classList.add('tabheader__item_active');
-                    this.content[i].style.display = '';
+    function showTabContent(i = 0) {
+        tabsContent[i].classList.add('show', 'fade');
+        tabsContent[i].classList.remove('hide');
+        tabs[i].classList.add('tabheader__item_active');
+    }
 
-                    for (let j = 0; j < 4; j++) {
-                        if (i == j) {
-                            continue;
-                        } else {
-                            this.contentName[j].classList.remove('tabheader__item_active');
-                            this.content[j].style.display = 'none';
+    hideTabContent();
+    showTabContent(0);
 
-                        }
-                    }
-                });
+    tabsParent.addEventListener('click', (event) => {
+        const target = event.target;
+
+        if (target && target.classList.contains('tabheader__item')) {
+            tabs.forEach((item, i) => {
+                if (target == item) {
+                    hideTabContent();
+                    showTabContent(i);
+                }
             });
         }
-    };
-
-    objTabs.startTabs();
+    });
 
     // Timer
     const deadline = '2020-10-22';
@@ -86,7 +91,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     setClock('.timer', deadline);
 
-
     // Modal
 
     const modalTrigger = document.querySelectorAll('[data-modal]'),
@@ -116,7 +120,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     document.addEventListener('keydown', (e) => {
-        if (e.code === "Escape" && modal.classList.contains('show')) { 
+        if (e.code === "Escape" && modal.classList.contains('show')) {
             closeModal();
         }
     });
@@ -130,9 +134,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
     window.addEventListener('scroll', showModalByScroll);
-
-
-   
 
     // Menu card -- class
 
@@ -178,33 +179,29 @@ document.addEventListener('DOMContentLoaded', function () {
 
     }
 
-    new MenuCard(
-        "img/tabs/vegy.jpg",
-        "vegy",
-        'Меню "Фитнес"',
-        'Меню "Фитнес" - это новый подход к приготовлению блюд: больше свежих овощей и фруктов. Продукт активных и здоровых людей.Это абсолютно новый продукт с оптимальной ценой и высоким качеством!',
-        9,
-        '.menu .container'
-    ).render();
+    const getResource = async (url) => {
+        const res = await fetch(url);
 
-    new MenuCard(
-        "img/tabs/elite.jpg",
-        "elite",
-        'Меню “Премиум”',
-        'В меню “Премиум” мы используем не только красивый дизайн упаковки, но и качественное исполнение блюд. Красная рыба, морепродукты, фрукты - ресторанное меню без похода в ресторан!',
-        14,
-        '.menu .container'
-    ).render();
+        if (!res.ok) {
+            throw new Error(`Could not fetch ${url}, status: ${res.status}`);
+        }
 
-    new MenuCard(
-        "img/tabs/post.jpg",
-        "post",
-        'Меню "Постное"',
-        'Меню “Постное” - это тщательный подбор ингредиентов: полное отсутствие продуктов животного происхождения, молоко из миндаля, овса, кокоса или гречки, правильное количество белков за счет тофу и импортных вегетарианских стейков.',
-        21,
-        '.menu .container'
-    ).render();
-    
+        return res.json();
+    };
+
+    getResource('http://localhost:3000/menu')
+        .then(data => {
+            data.forEach(({
+                img,
+                altimg,
+                title,
+                descr,
+                price
+            }) => {
+                new MenuCard(img, altimg, title, descr, price, '.menu .container').render();
+            });
+        });
+
     // Forms   
 
     const forms = document.querySelectorAll('form');
@@ -216,10 +213,22 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     forms.forEach(item => {
-        postData(item);
+        bindPostData(item);
     });
-    
-    function postData(form) {
+
+    const postData = async (url, data) => {
+        const res = await fetch(url, {
+            method: "POST",
+            headers: {
+                'Content-type': 'application/json'
+            },
+            body: data
+        });
+
+        return res.json();
+    };
+
+    function bindPostData(form) {
         form.addEventListener('submit', (e) => {
             e.preventDefault();
 
@@ -233,32 +242,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const formData = new FormData(form);
 
-            const object = {};
-            formData.forEach(function(value, key) {
-                object[key] = value;
-            });
+            const json = JSON.stringify(Object.fromEntries(formData.entries()));
 
-            // fetch new
-
-            fetch('server.php', {
-                method: "POST",
-                headers: {
-                    'Content-type': 'application/json'
-                },
-                body: JSON.stringify(object)
-            })
-            .then(date => date.text())
-            .then(data => {
-                console.log(data);
-                showThanksModal(message.success);
-                statusMassage.remove();
-            })
-            .catch(() => {
-                showThanksModal(message.faillure);
-            })
-            .finally(() => {
-                form.reset();
-            });
+            postData('http://localhost:3000/requests', json)
+                .then(data => {
+                    console.log(data);
+                    showThanksModal(message.success);
+                    statusMassage.remove();
+                })
+                .catch(() => {
+                    showThanksModal(message.faillure);
+                })
+                .finally(() => {
+                    form.reset();
+                });
 
         });
     }
@@ -288,5 +285,219 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 4000);
 
     }
+
+    fetch('http://localhost:3000/menu')
+        .then(data => data.json())
+        .then(res => console.log(res));
+
+
+
+    // new Slider карусель:))
+
+    function newSlider() {
+        let slideIndex = 1;
+        let offset = 0;
+        const slides = document.querySelectorAll('.offer__slide');
+        const slider = document.querySelector('.offer__slider');
+        const prev = document.querySelector('.offer__slider-prev');
+        const next = document.querySelector('.offer__slider-next');
+        const current = document.querySelector('#current');
+        const total = document.querySelector('#total');
+        const slidesWraper = document.querySelector('.offer__slider-wrapper');
+        const slidesField = document.querySelector('.offer__slider-inner');
+        const width = window.getComputedStyle(slidesWraper).width;
+
+        if (slides.length < 10) {
+            total.textContent = `0${slides.length}`;
+            current.textContent = `0${slideIndex}`;
+        } else {
+            total.textContent = slides.length;
+            current.textContent = slideIndex;
+        }
+
+        slidesField.style.width = 100 * slides.length + '%';
+        slidesField.style.display = 'flex';
+        slidesField.style.transition = '0.5s all';
+
+        slidesWraper.style.overflow = 'hidden';
+
+        slides.forEach(slide => {
+            slide.style.width = width;
+        });
+
+        slider.style.position = 'relative';
+
+        // dot indicators
+
+        const indicators = document.createElement('ol');
+        const dots = [];
+        indicators.classList.add('carousel-indicators');
+        slider.append(indicators);
+
+        for (let i = 0; i < slides.length; i++) {
+            const dot = document.createElement('li');
+            dot.setAttribute('data-slide-to', i + 1);
+            dot.classList.add('dot');
+
+            if (i == 0) {
+                dot.style.opacity = 1;
+            }
+            indicators.append(dot);
+            dots.push(dot);
+        }
+
+        function slidesTranslateX() {
+            slidesField.style.transform = `translateX(-${offset}px)`;
+        }
+
+        function currentText() {
+            if (slides.length < 10) {
+                current.textContent = `0${slideIndex}`;
+            } else {
+                current.textContent = slideIndex;
+            }
+        }
+
+        function dotActive() {
+            dots.forEach(dot => dot.style.opacity = '.5');
+            dots[slideIndex - 1].style.opacity = 1;
+        }
+
+        function widthReplace() {
+            return +width.replace(/\D/g, '');
+        }
+        function delNotDigits(str) {
+            return +str.replace(/\D/g, '');
+        }
+
+
+        next.addEventListener('click', () => {
+            if (offset == delNotDigits(width) * (slides.length - 1)) {
+                offset = 0;
+            } else {
+                offset += delNotDigits(width);
+            }
+
+            slidesTranslateX();
+
+            if (slideIndex == slides.length) {
+                slideIndex = 1;
+            } else {
+                slideIndex++;
+            }
+
+            currentText();
+            dotActive();
+        });
+
+        prev.addEventListener('click', () => {
+            if (offset == 0) {
+                offset = delNotDigits(width) * (slides.length - 1);
+            } else {
+                offset -= delNotDigits(width);
+            }
+
+            slidesTranslateX();
+
+            if (slideIndex == 1) {
+                slideIndex = slides.length;
+            } else {
+                slideIndex--;
+            }
+
+            currentText();
+            dotActive();
+        });
+
+        // dots listener
+        dots.forEach(dot => {
+            dot.addEventListener('click', (e) => {
+                const slideTo = e.target.getAttribute('data-slide-to');
+
+                slideIndex = slideTo;
+                offset = delNotDigits(width) * (slideTo - 1);
+
+                slidesTranslateX();
+                currentText();
+                dotActive();
+
+            });
+        });
+
+    }
+
+    newSlider();
+
+    //clalc 
+
+    const result = document.querySelector('.calculating__result span');
+    let sex = 'female', 
+    height, weight, age, 
+    ratio = 1.375;
+
+    function calcTotal() {
+        if (!sex || !height || !weight || !age || !ratio) {
+            result.textContent = '___';
+            return;
+        }
+
+        if (sex === 'female') {
+            result.textContent = Math.round((447.6 + (9.2 * weight) + (3.1 * height) - (4.3 * age)) * ratio);
+        } else {
+            result.textContent = Math.round((88.36 + (13.4 * weight) + (4.8 * height) - (5.7 * age)) * ratio);
+        }
+    }
+
+    calcTotal();
+
+    function getStaticInfo(parentSelector, activeClass) {
+        const element = document.querySelectorAll(`${parentSelector} div`);
+
+        element.forEach(elem => {
+            elem.addEventListener('click', (e) => {
+                if (e.target.getAttribute('data-ratio')) {
+                    ratio = +e.target.getAttribute('data-ratio');
+                } else {
+                    sex = e.target.getAttribute('id');
+                }
+    
+                element.forEach(elem => {
+                    elem.classList.remove(activeClass);
+                });
+    
+                e.target.classList.add(activeClass);
+    
+                calcTotal();
+            });
+        });
+
+    }
+
+    getStaticInfo('#gender', 'calculating__choose-item_active');
+    getStaticInfo('.calculating__choose_big', 'calculating__choose-item_active');
+
+    function getDynamicInfo(selector) {
+        const input = document.querySelector(selector);
+
+        input.addEventListener('input', () => {
+            switch(input.getAttribute('id')) {
+                case 'height':
+                    height = +input.value;
+                    break;
+                case 'weight':
+                    weight = +input.value;
+                    break;
+                case 'age':
+                    age = +input.value; 
+                    break;
+            }
+
+            calcTotal();
+        });
+    }
+
+    getDynamicInfo('#height');
+    getDynamicInfo('#weight');
+    getDynamicInfo('#age');
 
 });
